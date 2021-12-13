@@ -3,13 +3,8 @@
 /* eslint-disable prefer-const */
 /* eslint-disable @typescript-eslint/no-inferrable-types */
 /* eslint-disable no-mixed-spaces-and-tabs */
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
-import { openStdin } from 'process';
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { S_IFBLK } from 'constants';
-import { isNumber } from 'util';
 
 let can_click: boolean = true;
 
@@ -82,14 +77,12 @@ function printTest(output: vscode.OutputChannel) {
   output.appendLine("[build] /bin/../lib/gcc/x86_64-linux-gnu/9/../../../../include/c++/9/bits/alloc_traits.h:483:24: note: in instantiation of exception specification for 'construct<BR2::AtlasSprite, std::shared_ptr<BR2::Atlas> >' requested here");
   output.appendLine("[build]         noexcept(noexcept(__a.construct(__p, std::forward<_Args>(__args)...)))");
 
-
-
 }
 
 export function activate(context: vscode.ExtensionContext) {
-  const output = vscode.window.createOutputChannel("C/C++ Errors");
+  const output = vscode.window.createOutputChannel("C/C++ Interactive Output Errors");
 
-  const disposable = vscode.commands.registerCommand('extension.helloWorld', () => {
+  const disposable = vscode.commands.registerCommand('extension.interactive_output_c_cpp', () => {
     //Disable.
     printTest(output);
 
@@ -100,9 +93,8 @@ export function activate(context: vscode.ExtensionContext) {
       }
 
       if (
-        !editor.document.fileName.match("extension-output-vscode-samples.helloworld-sample.*") &&
+        !editor.document.fileName.match("extension-output.*interactive_output_c_cpp.*") &&
         !editor.document.fileName.match("extension-output-ms-vscode.cmake-tools.*")) {
-        //console.error("clicked editor = " + editor.document.fileName);
         return;
       }
 
@@ -129,11 +121,17 @@ export function activate(context: vscode.ExtensionContext) {
   });
 }
 function parseClickedLine(strline: string) {
+  //Hack hack hack.. 
+  //If the navigation doesn't work, we need to match another format.
+  //Clang and GCC tend to spit out files similar to this format.
   //[build] /usr/include/c++/9/debug/map.h:290:48
-  const type1 = strline.match("\\[build\\]\\s+(.*\\.(?:h|hpp|c|cpp|hxx|cxx))\\:([0-9]+)\\:([0-9]+)\\:.*$");
+  //[build] In file included from ../src/gfx/../base/../base/GlobalIncludes.h:20:
+  const type1 = strline.match("\\[build\\]\\s+(.*\\.(?:h|hpp|c|cpp|hxx|cxx))\\:([0-9]+)\\:([0-9]+)\\:.*");
   //[build]                  from /usr/include/c++/9/map:67
   //[build] In file included from ../src/gfx/Atlas.cpp:7:
-  const type2 = strline.match("\\[build\\]\\s+.*\\s+(.*\\.(?:h|hpp|c|cpp|hxx|cxx))\\:([0-9]+),");
+  const type2 = strline.match("\\[build\\]\\s+.*\\s+(.*\\.(?:h|hpp|c|cpp|hxx|cxx))\\:([0-9]+).*");
+
+  //Might be better to do some kind of flood fill search for the filename.
 
   if (type1 && type1.length == 4) {
     let match_file = type1[1];
@@ -180,13 +178,13 @@ function findAndOpenFileInWorkspace(file_path: string, line_num: number = -1, ch
       //multiple files found.
       //we should resolve it best case
       file_uri = paths[0];
-    }
+    } 
     else {
       if (!path.isAbsolute(file_path)) {
         return;
       }
       try{
-        file_uri = vscode.Uri.parse("file://"+file_path, true);
+        file_uri = vscode.Uri.parse("file://"+file_path);
       }
       catch(e){
         console.error(e);
