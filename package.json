@@ -3,7 +3,7 @@
 	"displayName": "interactive_output_c_cpp",
 	"description": "C/C++ Interactive Output for VS Code",
 	"version": "0.0.1",
-	"publisher": "derekpage",
+	"publisher": "",
 	"repository": "https://github.com/cacttus/vscode_interactive_output_c_cpp",
 	"engines": {
 		"vscode": "^1.34.0"
